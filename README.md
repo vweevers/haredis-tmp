@@ -5,6 +5,28 @@ quick redis server cluster for testing or ephemeral data
 
 [![build status](https://secure.travis-ci.org/carlos8f/haredis-tmp.png)](http://travis-ci.org/carlos8f/haredis-tmp)
 
+## Usage
+
+```js
+var tmp = require('haredis-tmp');
+
+tmp([6380, 6381, 6382], function (err, p, shutdown, servers) {
+  // if no err, there is now a redis-server running on each port,
+  // with data dirs contained in the folder `p`,
+  // which can be shutdown by calling `shutdown(cb)`,
+  // and child processes accessed via the object hash `servers`.
+  // shutdown() automatically called on process exit, and ALL data is cleaned up!
+});
+```
+
+## CLI version
+
+```
+$ npm install -g haredis-tmp
+$ haredis-tmp 6380 6381 6382 [etc...]
+haredis-tmp cluster started: /tmp/haredis-tmp-pD6CWUZw
+```
+
 - - -
 
 ### Developed by [Terra Eclipse](http://www.terraeclipse.com)
