@@ -1,6 +1,6 @@
 {
   "name": "haredis-tmp",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "quick redis server cluster for testing or ephemeral data",
   "main": "index.js",
   "bin": "./bin/haredis-tmp",
