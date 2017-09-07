@@ -14,7 +14,7 @@
     "haredis": "~0.2.14"
   },
   "scripts": {
-    "test": "make test"
+    "test": "mocha --reporter spec --bail --timeout 30s --require test/common.js"
   },
   "repository": {
     "type": "git",
