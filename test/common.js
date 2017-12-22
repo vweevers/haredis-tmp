@@ -2,6 +2,7 @@ assert = require('assert');
 util = require('util');
 tmp = require('../');
 haredis = require('haredis');
+ioredis = require('ioredis');
 existsSync = require('fs').existsSync || require('path').existsSync;
 spawn = require('child_process').spawn;
 path = require('path');

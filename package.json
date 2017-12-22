@@ -10,8 +10,9 @@
     "mkdirp": "~0.3.5"
   },
   "devDependencies": {
-    "mocha": "*",
-    "haredis": "~0.2.14"
+    "haredis": "~0.2.14",
+    "ioredis": "~3.2.2",
+    "mocha": "*"
   },
   "scripts": {
     "test": "mocha --reporter spec --bail --timeout 30s --require test/common.js"

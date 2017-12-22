@@ -7,7 +7,12 @@ var exec = require('child_process').exec
   , idgen = require('idgen')
   , tmpdir = require('os').tmpdir()
 
-module.exports = function tmp (ports, cb) {
+module.exports = function tmp (ports, opts, cb) {
+  if (typeof opts === 'function') {
+    cb = opts
+    opts = {}
+  }
+
   var p = path.join(tmpdir, 'haredis-tmp-' + idgen())
     , servers = {}
     , killed = false
@@ -27,8 +32,11 @@ module.exports = function tmp (ports, cb) {
       var configfile = path.join(dir, 'redis.conf');
       mkdirp(dir, function (err) {
         if (err) return cb(err);
+
         var conf = 'port ' + port + '\ndir ' + dir + '\n';
+
         if (!version.match(/^2\.(2|3|4)\./)) conf += 'slave-read-only no\n';
+        if (opts.password) conf += 'requirepass ' + opts.password.trim() + '\n';
 
         fs.writeFile(configfile, conf, function (err) {
           if (err) return cb(err)
@@ -37,9 +45,9 @@ module.exports = function tmp (ports, cb) {
           var started = false;
           var buf = '';
 
-          child.stdout.on('data', function handleData (chunk) {
-            if (/The server is now ready/.test(buf+= chunk)) {
-              child.stdout.removeListener('data', handleData)
+          child.stdout.on('data', function (chunk) {
+            if (!started && /The server is now ready/.test(buf+= chunk)) {
+              started = true;
               clearTimeout(timeout);
               cb(null, child);
             }
