@@ -18,6 +18,7 @@ module.exports = function tmp (ports, opts, cb) {
     , servers = {}
     , killed = false
 
+  // TODO: throw error on premature exit
   function makeServer (port, cb) {
     exec('redis-server --version', function (err, stdout, stderr) {
       if (err) return cb(err);
@@ -51,8 +52,13 @@ module.exports = function tmp (ports, opts, cb) {
           var started = false;
           var buf = '';
 
-          child.stdout.on('data', function (chunk) {
+          child.stdout.on('data', function handleData (chunk) {
             if (!started && /The server is now ready/.test(buf+= chunk)) {
+              if (opts.verbose) {
+                child.stdout.removeListener('data', handleData)
+                child.stdout.pipe(process.stderr)
+              }
+
               started = true;
               clearTimeout(timeout);
               cb(null, child);
