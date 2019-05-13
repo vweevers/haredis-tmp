@@ -13,7 +13,8 @@ module.exports = function tmp (ports, opts, cb) {
     opts = {}
   }
 
-  var p = path.join(tmpdir, 'haredis-tmp-' + idgen())
+  // TODO: use tempy
+  var p = path.join(tmpdir, 'haredis-tmp-' + idgen() + '-' + Date.now())
     , servers = {}
     , killed = false
 
