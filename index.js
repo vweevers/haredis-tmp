@@ -39,6 +39,11 @@ module.exports = function tmp (ports, opts, cb) {
         if (!version.match(/^2\.(2|3|4)\./)) conf += 'slave-read-only no\n';
         if (opts.password) conf += 'requirepass ' + opts.password.trim() + '\n';
 
+        if (opts.bufferLimit === false) {
+          conf += 'client-output-buffer-limit pubsub 0 0 0\n'
+          conf += 'client-output-buffer-limit slave 0 0 0\n'
+        }
+
         fs.writeFile(configfile, conf, function (err) {
           if (err) return cb(err)
 
