@@ -10,6 +10,6 @@ node_js:
   - 10
   - node
 
-script:
+before_script:
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; brew install redis; fi
   - redis-server --version
-  - npm test
