@@ -1,6 +1,6 @@
 {
   "name": "tmp-redis",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Start a single Redis server for testing or ephemeral data",
   "license": "MIT",
   "main": "index.js",
