@@ -14,8 +14,7 @@ const tmp = require('haredis-tmp')
 
 tmp(6380, function (err, shutdown, path) {
   // if no err, there is now a redis-server running
-  // which can be shutdown by calling `shutdown(cb)`,
-  // shutdown() automatically called on process exit, and ALL data is cleaned up!
+  // which can be shutdown by calling `shutdown(cb)`.
 })
 ```
 

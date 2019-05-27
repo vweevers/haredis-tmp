@@ -87,9 +87,6 @@ module.exports = function tmp (port, opts, cb) {
     if (killed) return
     else killed = true
 
-    process.removeListener('SIGTERM', shutdown)
-    process.removeListener('SIGINT', shutdown)
-
     let latch = Object.keys(servers).length
 
     Object.keys(servers).forEach(function (port) {
@@ -103,9 +100,6 @@ module.exports = function tmp (port, opts, cb) {
       servers[port].kill('SIGKILL')
     })
   }
-
-  process.once('SIGTERM', shutdown)
-  process.once('SIGINT', shutdown)
 
   let errored = false
   let latch = ports.length
