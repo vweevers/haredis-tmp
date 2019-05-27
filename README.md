@@ -16,7 +16,7 @@ Start a Redis server on port 6380:
 ```js
 const tmp = require('tmp-redis')
 
-tmp(6380, function (err, shutdown, path) {
+tmp(6380, function (err, shutdown) {
   if (err) throw err
 
   // When you're done
@@ -25,6 +25,16 @@ tmp(6380, function (err, shutdown, path) {
   })
 })
 ```
+
+## API
+
+### `tmp(port[, options], callback)`
+
+Port must be a number. The `callback` will receive an error if any, a `shutdown` function that stops Redis, and a `path` string to the configuration on disk (in a temporary directory). The optional `options` object may contain the following properties:
+
+- `verbose`: boolean, if `true`, pipe Redis output to stderr
+- `password`: string, default none, require clients to connect with this password
+- `bufferLimit`: boolean, if `false`, disable `client-output-buffer-limit`
 
 ## License
 
