@@ -56,7 +56,7 @@ test('basic', function (t) {
   t.end()
 })
 
-test('password test with ioredis', function (t) {
+test('password test', function (t) {
   let port = 6380
   let shutdown
 

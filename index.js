@@ -1,10 +1,10 @@
 'use strict'
 
+const tempy = require('tempy')
+const rimraf = require('rimraf')
 const spawn = require('child_process').spawn
 const fs = require('fs')
 const path = require('path')
-const tempy = require('tempy')
-const rimraf = require('rimraf')
 
 let warned = false
 
@@ -26,90 +26,62 @@ module.exports = function tmp (port, opts, cb) {
   }
 
   const dir = tempy.directory()
-  const servers = {}
-  const ports = [port]
+  const configfile = path.join(dir, 'redis.conf')
 
+  let started = false
   let killed = false
+  let onExit
+  let buf = ''
+  let conf = 'port ' + port + '\ndir ' + dir + '\n'
 
-  // TODO: throw error on premature exit
-  function makeServer (port, cb) {
-    const configfile = path.join(dir, 'redis.conf')
+  if (opts.password) {
+    conf += 'requirepass ' + opts.password.trim() + '\n'
+  }
 
-    let conf = 'port ' + port + '\ndir ' + dir + '\n'
+  if (opts.bufferLimit === false) {
+    conf += 'client-output-buffer-limit pubsub 0 0 0\n'
+    conf += 'client-output-buffer-limit slave 0 0 0\n'
+  }
 
-    if (opts.password) {
-      conf += 'requirepass ' + opts.password.trim() + '\n'
+  fs.writeFile(configfile, conf, function (err) {
+    if (err) return cb(err)
+
+    const cp = spawn('redis-server', [configfile], { stdio: ['ignore', 'pipe', 'inherit'] })
+
+    cp.stdout.on('data', handleData)
+    cp.once('exit', handleExit)
+
+    function handleData (chunk) {
+      if (!started && /The server is now ready/.test(buf += chunk)) {
+        if (opts.verbose) {
+          cp.stdout.removeListener('data', handleData)
+          cp.stdout.pipe(process.stderr)
+        }
+
+        started = true
+        cb(null, shutdown, dir)
+      }
     }
 
-    if (opts.bufferLimit === false) {
-      conf += 'client-output-buffer-limit pubsub 0 0 0\n'
-      conf += 'client-output-buffer-limit slave 0 0 0\n'
+    function handleExit (code) {
+      cp.stdout.removeListener('data', handleData)
+
+      if (!started) return cb(new Error(`Premature exit with code ${code}`))
+      if (!killed) throw new Error(`Premature exit with code ${code}`)
+
+      rimraf(dir, { glob: false }, onExit)
     }
 
-    fs.writeFile(configfile, conf, function (err) {
-      if (err) return cb(err)
+    function shutdown (cb) {
+      if (typeof cb !== 'function') {
+        throw new Error('The first argument of shutdown() must be a function')
+      } else if (killed) {
+        throw new Error('Cannot call shutdown() twice')
+      }
 
-      const child = spawn('redis-server', [configfile], { stdio: ['ignore', 'pipe', 'inherit'] })
-
-      let started = false
-      let buf = ''
-
-      child.stdout.on('data', function handleData (chunk) {
-        if (!started && /The server is now ready/.test(buf += chunk)) {
-          if (opts.verbose) {
-            child.stdout.removeListener('data', handleData)
-            child.stdout.pipe(process.stderr)
-          }
-
-          started = true
-          clearTimeout(timeout)
-          cb(null, child)
-        }
-      })
-
-      const timeout = setTimeout(function () {
-        cb(new Error('redis-server on port ' + port + ' failed to start'))
-      }, 10000)
-
-      timeout.unref()
-    })
-  }
-
-  function shutdown (cb) {
-    if (killed) return
-    else killed = true
-
-    let latch = Object.keys(servers).length
-
-    Object.keys(servers).forEach(function (port) {
-      servers[port].once('exit', function () {
-        if (!--latch) {
-          if (typeof cb === 'function') rimraf(dir, { glob: false }, cb)
-          else rimraf.sync(dir, { glob: false })
-        }
-      })
-
-      servers[port].kill('SIGKILL')
-    })
-  }
-
-  let errored = false
-  let latch = ports.length
-
-  function onErr (err) {
-    if (errored) return
-    errored = true
-    if (cb) cb(err)
-    else throw err
-  }
-
-  ports.forEach(function (port) {
-    if (typeof port === 'string') port = Number(port.split(':')[1])
-
-    makeServer(port, function (err, server) {
-      if (err || errored) return onErr(err)
-      servers[port] = server
-      if (!--latch) cb && cb(null, shutdown, dir)
-    })
+      killed = true
+      onExit = cb
+      cp.kill('SIGKILL')
+    }
   })
 }
