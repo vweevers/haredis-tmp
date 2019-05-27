@@ -52,7 +52,7 @@ module.exports = function tmp (port, opts, cb) {
     cp.once('exit', handleExit)
 
     function handleData (chunk) {
-      if (!started && /The server is now ready/.test(buf += chunk)) {
+      if (!started && isReady(buf += chunk)) {
         if (opts.verbose) {
           cp.stdout.removeListener('data', handleData)
           cp.stdout.pipe(process.stderr)
@@ -63,6 +63,10 @@ module.exports = function tmp (port, opts, cb) {
       } else {
         console.error(String(chunk))
       }
+    }
+
+    function isReady (buf) {
+      return /(The server is now ready)|(Ready to accept connections)/.test(buf)
     }
 
     function handleExit (code) {
