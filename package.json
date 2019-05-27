@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "description": "quick redis server cluster for testing or ephemeral data",
   "main": "index.js",
-  "bin": "./bin/haredis-tmp",
   "scripts": {
     "test": "standard && mocha --reporter spec --bail --timeout 30s --require test/common.js"
   },

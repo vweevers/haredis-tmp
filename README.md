@@ -20,14 +20,6 @@ tmp([6380, 6381, 6382], function (err, p, shutdown, servers) {
 })
 ```
 
-## CLI version
-
-```
-$ npm install -g haredis-tmp
-$ haredis-tmp 6380 6381 6382 [etc...]
-haredis-tmp cluster started: /tmp/haredis-tmp-pD6CWUZw
-```
-
 - - -
 
 ### Developed by [Terra Eclipse](http://www.terraeclipse.com)
