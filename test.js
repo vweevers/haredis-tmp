@@ -13,7 +13,7 @@ test('basic', function (t) {
   let path
 
   t.test('start redis', function (t) {
-    tmp(port, function (err, shutdown_, path_) {
+    tmp(port, { verbose: true }, function (err, shutdown_, path_) {
       t.ifError(err)
       shutdown = shutdown_
       path = path_
