@@ -1,18 +1,19 @@
 #!/usr/bin/env node
+'use strict'
 
-var tmp = require('../')
-  , assert = require('assert')
+const tmp = require('..')
+const assert = require('assert')
 
 var ports = process.argv.slice(2).map(function (port) {
-  return Number(port);
-});
+  return Number(port)
+})
 
 if (!ports.length) {
-  console.error('usage: haredis-tmp <port1> <port2> <port3> [<port4>...]');
-  process.exit(1);
+  console.error('usage: haredis-tmp <port1> <port2> <port3> [<port4>...]')
+  process.exit(1)
 }
 
 tmp(ports, function (err, p) {
-  assert.ifError(err);
-  console.log('haredis-tmp cluster started: ' + p);
-});
+  assert.ifError(err)
+  console.log('haredis-tmp cluster started: ' + p)
+})

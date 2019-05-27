@@ -4,11 +4,12 @@ haredis-tmp
 quick redis server cluster for testing or ephemeral data
 
 [![build status](https://secure.travis-ci.org/carlos8f/haredis-tmp.png)](http://travis-ci.org/carlos8f/haredis-tmp)
+[![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 ## Usage
 
 ```js
-var tmp = require('haredis-tmp');
+const tmp = require('haredis-tmp')
 
 tmp([6380, 6381, 6382], function (err, p, shutdown, servers) {
   // if no err, there is now a redis-server running on each port,
@@ -16,7 +17,7 @@ tmp([6380, 6381, 6382], function (err, p, shutdown, servers) {
   // which can be shutdown by calling `shutdown(cb)`,
   // and child processes accessed via the object hash `servers`.
   // shutdown() automatically called on process exit, and ALL data is cleaned up!
-});
+})
 ```
 
 ## CLI version

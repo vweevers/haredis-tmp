@@ -4,6 +4,9 @@
   "description": "quick redis server cluster for testing or ephemeral data",
   "main": "index.js",
   "bin": "./bin/haredis-tmp",
+  "scripts": {
+    "test": "standard && mocha --reporter spec --bail --timeout 30s --require test/common.js"
+  },
   "dependencies": {
     "rimraf": "~2.1.4",
     "idgen": "~1.2.0",
@@ -12,10 +15,8 @@
   "devDependencies": {
     "haredis": "~0.2.14",
     "ioredis": "~3.2.2",
-    "mocha": "*"
-  },
-  "scripts": {
-    "test": "mocha --reporter spec --bail --timeout 30s --require test/common.js"
+    "mocha": "*",
+    "standard": "^12.0.1"
   },
   "repository": {
     "type": "git",

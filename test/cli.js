@@ -1,44 +1,46 @@
+/* global it describe assert assertPorts haredis spawn path existsSync */
+
 describe('cli', function () {
-  var ports = [6383, 6384, 6385]
-    , child
-    , p
-    , client
+  let ports = [6383, 6384, 6385]
+  let child
+  let p
+  let client
 
   it('create a cluster', function (done) {
-    child = spawn('node', [path.join(__dirname, '../bin/haredis-tmp')].concat(ports));
-    child.stderr.pipe(process.stderr);
+    child = spawn('node', [path.join(__dirname, '../bin/haredis-tmp')].concat(ports))
+    child.stderr.pipe(process.stderr)
     child.stdout.on('data', function (data) {
-      var match = String(data).match(/started: (.*)/);
-      p = match[1];
-      assert(~p.indexOf('haredis-tmp'));
-      assert(existsSync(p));
-      done();
-    });
-  });
+      var match = String(data).match(/started: (.*)/)
+      p = match[1]
+      assert(~p.indexOf('haredis-tmp'))
+      assert(existsSync(p))
+      done()
+    })
+  })
 
   it('ports accessible', function (done) {
-    assertPorts(ports, done);
-  });
+    assertPorts(ports, done)
+  })
 
   it('connect to cluster', function (done) {
-    client = haredis.createClient(ports, {log_level: 0});
+    client = haredis.createClient(ports, { log_level: 0 })
     client.once('connect', function () {
-      assert.equal(client.up.length, 3);
-      done();
-    });
-  });
+      assert.equal(client.up.length, 3)
+      done()
+    })
+  })
 
   it('quit client', function (done) {
-    client.quit(done);
-  });
+    client.quit(done)
+  })
 
   it('shutdown cluster', function (done) {
     child.once('exit', function (status) {
-      assert(!status);
-      done();
-    });
-    child.kill('SIGINT');
-  });
+      assert(!status)
+      done()
+    })
+    child.kill('SIGINT')
+  })
 
   // I don't care
 
@@ -49,4 +51,4 @@ describe('cli', function () {
   // it('no files left over', function () {
   //   assert(!existsSync(p));
   // });
-});
+})

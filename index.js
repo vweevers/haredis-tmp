@@ -1,11 +1,13 @@
-var exec = require('child_process').exec
-  , spawn = require('child_process').spawn
-  , fs = require('fs')
-  , path = require('path')
-  , mkdirp = require('mkdirp')
-  , rimraf = require('rimraf')
-  , idgen = require('idgen')
-  , tmpdir = require('os').tmpdir()
+'use strict'
+
+const exec = require('child_process').exec
+const spawn = require('child_process').spawn
+const fs = require('fs')
+const path = require('path')
+const mkdirp = require('mkdirp')
+const rimraf = require('rimraf')
+const idgen = require('idgen')
+const tmpdir = require('os').tmpdir()
 
 module.exports = function tmp (ports, opts, cb) {
   if (typeof opts === 'function') {
@@ -14,31 +16,37 @@ module.exports = function tmp (ports, opts, cb) {
   }
 
   // TODO: use tempy
-  var p = path.join(tmpdir, 'haredis-tmp-' + idgen() + '-' + Date.now())
-    , servers = {}
-    , killed = false
+  const p = path.join(tmpdir, 'haredis-tmp-' + idgen() + '-' + Date.now())
+  const servers = {}
+
+  let killed = false
 
   // TODO: throw error on premature exit
   function makeServer (port, cb) {
     exec('redis-server --version', function (err, stdout, stderr) {
-      if (err) return cb(err);
-      var version;
-      var matches = stdout.match(/Redis server v=(.*) sha=/);
-      if (matches) version = matches[1];
-      else {
-        matches = stdout.match(/version ([^ ]+) /);
-        if (matches) version = matches[1];
-        else return cb(new Error('could not detect redis-server version! ' + stdout));
+      if (err) return cb(err)
+
+      let version
+      let matches = stdout.match(/Redis server v=(.*) sha=/)
+
+      if (matches) {
+        version = matches[1]
+      } else {
+        matches = stdout.match(/version ([^ ]+) /)
+        if (matches) version = matches[1]
+        else return cb(new Error('could not detect redis-server version! ' + stdout))
       }
-      var dir = path.join(p, String(port));
-      var configfile = path.join(dir, 'redis.conf');
+
+      const dir = path.join(p, String(port))
+      const configfile = path.join(dir, 'redis.conf')
+
       mkdirp(dir, function (err) {
-        if (err) return cb(err);
+        if (err) return cb(err)
 
-        var conf = 'port ' + port + '\ndir ' + dir + '\n';
+        let conf = 'port ' + port + '\ndir ' + dir + '\n'
 
-        if (!version.match(/^2\.(2|3|4)\./)) conf += 'slave-read-only no\n';
-        if (opts.password) conf += 'requirepass ' + opts.password.trim() + '\n';
+        if (!version.match(/^2\.(2|3|4)\./)) conf += 'slave-read-only no\n'
+        if (opts.password) conf += 'requirepass ' + opts.password.trim() + '\n'
 
         if (opts.bufferLimit === false) {
           conf += 'client-output-buffer-limit pubsub 0 0 0\n'
@@ -48,68 +56,75 @@ module.exports = function tmp (ports, opts, cb) {
         fs.writeFile(configfile, conf, function (err) {
           if (err) return cb(err)
 
-          var child = spawn('redis-server', [configfile], { stdio: ['ignore', 'pipe', 'inherit'] });
-          var started = false;
-          var buf = '';
+          const child = spawn('redis-server', [configfile], { stdio: ['ignore', 'pipe', 'inherit'] })
+
+          let started = false
+          let buf = ''
 
           child.stdout.on('data', function handleData (chunk) {
-            if (!started && /The server is now ready/.test(buf+= chunk)) {
+            if (!started && /The server is now ready/.test(buf += chunk)) {
               if (opts.verbose) {
                 child.stdout.removeListener('data', handleData)
                 child.stdout.pipe(process.stderr)
               }
 
-              started = true;
-              clearTimeout(timeout);
-              cb(null, child);
+              started = true
+              clearTimeout(timeout)
+              cb(null, child)
             }
-          });
+          })
 
-          var timeout = setTimeout(function () {
-            cb(new Error('redis-server on port ' + port + ' failed to start'));
-          }, 10000);
+          const timeout = setTimeout(function () {
+            cb(new Error('redis-server on port ' + port + ' failed to start'))
+          }, 10000)
 
-          timeout.unref();
-        });
-      });
-    });
+          timeout.unref()
+        })
+      })
+    })
   }
 
   function shutdown (cb) {
-    if (killed) return;
-    else killed = true;
+    if (killed) return
+    else killed = true
 
-    process.removeListener('SIGTERM', shutdown);
-    process.removeListener('SIGINT', shutdown);
+    process.removeListener('SIGTERM', shutdown)
+    process.removeListener('SIGINT', shutdown)
 
-    var latch = Object.keys(servers).length;
+    let latch = Object.keys(servers).length
 
     Object.keys(servers).forEach(function (port) {
       servers[port].once('exit', function () {
         if (!--latch) {
-          if (typeof cb === 'function') rimraf(p, cb);
-          else rimraf.sync(p);
+          if (typeof cb === 'function') rimraf(p, cb)
+          else rimraf.sync(p)
         }
-      });
-      servers[port].kill('SIGKILL');
-    });
-  }
-  process.once('SIGTERM', shutdown);
-  process.once('SIGINT', shutdown);
+      })
 
-  var errored = false, latch = ports.length;
-  function onErr (err) {
-    if (errored) return;
-    errored = true;
-    if (cb) cb(err);
-    else throw err;
+      servers[port].kill('SIGKILL')
+    })
   }
+
+  process.once('SIGTERM', shutdown)
+  process.once('SIGINT', shutdown)
+
+  let errored = false
+  let latch = ports.length
+
+  function onErr (err) {
+    if (errored) return
+    errored = true
+    if (cb) cb(err)
+    else throw err
+  }
+
   ports.forEach(function (port) {
-    if (typeof port === 'string') port = Number(port.split(':')[1]);
+    if (typeof port === 'string') port = Number(port.split(':')[1])
+
     makeServer(port, function (err, server) {
-      if (err || errored) return onErr(err);
-      servers[port] = server;
-      if (!--latch) cb && cb(null, p, shutdown, servers);
-    });
-  });
-};
+      if (err || errored) return onErr(err)
+      servers[port] = server
+      if (!--latch) cb && cb(null, p, shutdown, servers)
+    })
+  })
+}
