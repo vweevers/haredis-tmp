@@ -60,7 +60,7 @@ module.exports = function tmp (port, opts, cb) {
 
         started = true
         cb(null, shutdown, dir)
-      } else {
+      } else if (opts.verbose) {
         console.error(String(chunk))
       }
     }
