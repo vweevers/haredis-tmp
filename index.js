@@ -3,10 +3,8 @@
 const spawn = require('child_process').spawn
 const fs = require('fs')
 const path = require('path')
-const mkdirp = require('mkdirp')
+const tempy = require('tempy')
 const rimraf = require('rimraf')
-const idgen = require('idgen')
-const tmpdir = require('os').tmpdir()
 
 let warned = false
 
@@ -27,8 +25,7 @@ module.exports = function tmp (port, opts, cb) {
     port = port[0]
   }
 
-  // TODO: use tempy
-  const p = path.join(tmpdir, 'haredis-tmp-' + idgen() + '-' + Date.now())
+  const dir = tempy.directory()
   const servers = {}
   const ports = [port]
 
@@ -36,50 +33,45 @@ module.exports = function tmp (port, opts, cb) {
 
   // TODO: throw error on premature exit
   function makeServer (port, cb) {
-    const dir = p
     const configfile = path.join(dir, 'redis.conf')
 
-    mkdirp(dir, function (err) {
+    let conf = 'port ' + port + '\ndir ' + dir + '\n'
+
+    if (opts.password) {
+      conf += 'requirepass ' + opts.password.trim() + '\n'
+    }
+
+    if (opts.bufferLimit === false) {
+      conf += 'client-output-buffer-limit pubsub 0 0 0\n'
+      conf += 'client-output-buffer-limit slave 0 0 0\n'
+    }
+
+    fs.writeFile(configfile, conf, function (err) {
       if (err) return cb(err)
 
-      let conf = 'port ' + port + '\ndir ' + dir + '\n'
+      const child = spawn('redis-server', [configfile], { stdio: ['ignore', 'pipe', 'inherit'] })
 
-      if (opts.password) {
-        conf += 'requirepass ' + opts.password.trim() + '\n'
-      }
+      let started = false
+      let buf = ''
 
-      if (opts.bufferLimit === false) {
-        conf += 'client-output-buffer-limit pubsub 0 0 0\n'
-        conf += 'client-output-buffer-limit slave 0 0 0\n'
-      }
-
-      fs.writeFile(configfile, conf, function (err) {
-        if (err) return cb(err)
-
-        const child = spawn('redis-server', [configfile], { stdio: ['ignore', 'pipe', 'inherit'] })
-
-        let started = false
-        let buf = ''
-
-        child.stdout.on('data', function handleData (chunk) {
-          if (!started && /The server is now ready/.test(buf += chunk)) {
-            if (opts.verbose) {
-              child.stdout.removeListener('data', handleData)
-              child.stdout.pipe(process.stderr)
-            }
-
-            started = true
-            clearTimeout(timeout)
-            cb(null, child)
+      child.stdout.on('data', function handleData (chunk) {
+        if (!started && /The server is now ready/.test(buf += chunk)) {
+          if (opts.verbose) {
+            child.stdout.removeListener('data', handleData)
+            child.stdout.pipe(process.stderr)
           }
-        })
 
-        const timeout = setTimeout(function () {
-          cb(new Error('redis-server on port ' + port + ' failed to start'))
-        }, 10000)
-
-        timeout.unref()
+          started = true
+          clearTimeout(timeout)
+          cb(null, child)
+        }
       })
+
+      const timeout = setTimeout(function () {
+        cb(new Error('redis-server on port ' + port + ' failed to start'))
+      }, 10000)
+
+      timeout.unref()
     })
   }
 
@@ -92,8 +84,8 @@ module.exports = function tmp (port, opts, cb) {
     Object.keys(servers).forEach(function (port) {
       servers[port].once('exit', function () {
         if (!--latch) {
-          if (typeof cb === 'function') rimraf(p, cb)
-          else rimraf.sync(p)
+          if (typeof cb === 'function') rimraf(dir, { glob: false }, cb)
+          else rimraf.sync(dir, { glob: false })
         }
       })
 
@@ -117,7 +109,7 @@ module.exports = function tmp (port, opts, cb) {
     makeServer(port, function (err, server) {
       if (err || errored) return onErr(err)
       servers[port] = server
-      if (!--latch) cb && cb(null, shutdown, p)
+      if (!--latch) cb && cb(null, shutdown, dir)
     })
   })
 }
