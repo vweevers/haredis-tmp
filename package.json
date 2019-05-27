@@ -7,13 +7,13 @@
     "test": "standard && node test"
   },
   "dependencies": {
-    "rimraf": "~2.1.4",
-    "idgen": "~1.2.0",
-    "mkdirp": "~0.3.5"
+    "idgen": "~2.1.0",
+    "mkdirp": "~0.5.1",
+    "rimraf": "~2.6.3"
   },
   "devDependencies": {
-    "haredis": "~0.2.14",
-    "ioredis": "~3.2.2",
+    "haredis": "^0.2.14",
+    "ioredis": "^4.9.5",
     "standard": "^12.0.1",
     "tape": "^4.10.2"
   },
