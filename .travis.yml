@@ -6,6 +6,5 @@ node_js:
   - node
 
 script:
-  - which redis-server
   - redis-server --version
   - npm test
