@@ -1,90 +1,93 @@
-/* global it describe */
+'use strict'
 
-const tmp = require('..')
+const test = require('tape')
 const haredis = require('haredis')
 const Redis = require('ioredis')
-const assert = require('assert')
 const existsSync = require('fs').existsSync
 const net = require('net')
+const tmp = require('..')
 
-describe('basic test', function () {
+test('basic', function (t) {
   let ports = [6380, 6381, 6382]
   let shutdown
   let client
   let p
   let servers
 
-  it('create a cluster', function (done) {
+  t.test('create a cluster', function (t) {
     tmp(ports, function (err, arg1, arg2, arg3) {
-      assert.ifError(err)
+      t.ifError(err)
       p = arg1
       shutdown = arg2
       servers = arg3
-      assert.strictEqual(typeof shutdown, 'function')
-      assert.strictEqual(typeof p, 'string')
-      assert(~p.indexOf('haredis-tmp'))
-      assert(existsSync(p))
-      assert.strictEqual(Object.keys(servers).length, 3)
-      done()
+      t.is(typeof shutdown, 'function')
+      t.is(typeof p, 'string')
+      t.ok(~p.indexOf('haredis-tmp'))
+      t.ok(existsSync(p))
+      t.is(Object.keys(servers).length, 3)
+      t.end()
     })
   })
 
-  it('ports accessible', function (done) {
-    assertPorts(ports, done)
+  t.test('ports accessible', function (t) {
+    assertPorts(t, ports, t.end.bind(t))
   })
 
-  it('connect to cluster', function (done) {
+  t.test('connect to cluster', function (t) {
     client = haredis.createClient(ports, { log_level: 0 })
     client.once('connect', function () {
-      assert.strictEqual(client.up.length, 3)
-      done()
+      t.is(client.up.length, 3)
+      t.end()
     })
   })
 
-  it('quit client', function (done) {
-    client.quit(done)
+  t.test('quit client', function (t) {
+    client.quit(t.end.bind(t))
   })
 
-  it('shutdown cluster', function (done) {
-    shutdown(done)
+  t.test('shutdown cluster', function (t) {
+    shutdown(t.end.bind(t))
   })
 
-  it('ports not accessible', function (done) {
-    assertNoPorts(ports, done)
+  t.test('ports not accessible', function (t) {
+    assertNoPorts(t, ports, t.end.bind(t))
   })
 
-  it('no files left over', function () {
-    assert(!existsSync(p))
+  t.test('no files left over', function (t) {
+    t.ok(!existsSync(p))
+    t.end()
   })
+
+  t.end()
 })
 
-describe('password test with ioredis', function () {
+test('password test with ioredis', function (t) {
   let port = 6380
   let shutdown
   let client
   let p
   let servers
 
-  it('create an instance', function (done) {
+  t.test('create an instance', function (t) {
     tmp([port], { password: 'qwerty' }, function (err, arg1, arg2, arg3) {
-      assert.ifError(err)
+      t.ifError(err)
       p = arg1
       shutdown = arg2
       servers = arg3
-      assert.strictEqual(typeof shutdown, 'function')
-      assert.strictEqual(typeof p, 'string')
-      assert(~p.indexOf('haredis-tmp'))
-      assert(existsSync(p))
-      assert.strictEqual(Object.keys(servers).length, 1)
-      done()
+      t.is(typeof shutdown, 'function')
+      t.is(typeof p, 'string')
+      t.ok(~p.indexOf('haredis-tmp'))
+      t.ok(existsSync(p))
+      t.is(Object.keys(servers).length, 1)
+      t.end()
     })
   })
 
-  it('ports accessible', function (done) {
-    assertPorts([port], done)
+  t.test('ports accessible', function (t) {
+    assertPorts(t, [port], t.end.bind(t))
   })
 
-  it('connect to instance', function (done) {
+  t.test('connect to instance', function (t) {
     client = new Redis({
       port: port,
       host: '127.0.0.1',
@@ -92,29 +95,30 @@ describe('password test with ioredis', function () {
       password: 'qwerty'
     })
 
-    client.once('connect', function () {
-      done()
+    client.once('ready', function () {
+      t.end()
     })
   })
 
-  it('quit client', function (done) {
-    client.quit(done)
+  t.test('quit client', function (t) {
+    client.quit(t.end.bind(t))
   })
 
-  it('shutdown cluster', function (done) {
-    shutdown(done)
+  t.test('shutdown cluster', function (t) {
+    shutdown(t.end.bind(t))
   })
 
-  it('ports not accessible', function (done) {
-    assertNoPorts([port], done)
+  t.test('ports not accessible', function (t) {
+    assertNoPorts(t, [port], t.end.bind(t))
   })
 
-  it('no files left over', function () {
-    assert(!existsSync(p))
+  t.test('no files left over', function (t) {
+    t.ok(!existsSync(p))
+    t.end()
   })
 })
 
-function assertPorts (ports, done) {
+function assertPorts (t, ports, done) {
   let latch = ports.length
 
   ports.forEach(function (port) {
@@ -131,7 +135,7 @@ function assertPorts (ports, done) {
   })
 }
 
-function assertNoPorts (ports, done) {
+function assertNoPorts (t, ports, done) {
   let latch = ports.length
 
   ports.forEach(function (port) {
@@ -142,7 +146,7 @@ function assertNoPorts (ports, done) {
     })
 
     socket.once('connect', function () {
-      assert.fail('connected', 'not connected')
+      t.fail('connected')
     })
   })
 }
