@@ -11,5 +11,5 @@ node_js:
   - node
 
 before_script:
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; brew install redis; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then HOMEBREW_NO_INSTALL_CLEANUP=1 brew install redis; fi
   - redis-server --version
