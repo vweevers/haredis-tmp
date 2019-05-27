@@ -1,50 +1,31 @@
-haredis-tmp
-===========
+# tmp-redis
 
 > **Start a single Redis server for testing or ephemeral data.**  
-> No cluster support.
+> `redis-server` must be available in `PATH`. No cluster support.
 
-[![build status](https://secure.travis-ci.org/carlos8f/haredis-tmp.png)](http://travis-ci.org/carlos8f/haredis-tmp)
+[![npm](https://img.shields.io/npm/v/tmp-redis.svg?label=&logo=npm)](https://www.npmjs.com/package/tmp-redis)
+[![Node version](https://img.shields.io/node/v/tmp-redis.svg)](https://www.npmjs.com/package/tmp-redis)
+[![Travis](https://img.shields.io/travis/vweevers/tmp-redis.svg?logo=travis&label=)](https://travis-ci.org/vweevers/tmp-redis)
+[![AppVeyor](https://img.shields.io/appveyor/ci/vweevers/tmp-redis.svg?logo=appveyor&label=)](https://ci.appveyor.com/project/vweevers/tmp-redis)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 ## Usage
 
+Start a Redis server on port 6380:
+
 ```js
-const tmp = require('haredis-tmp')
+const tmp = require('tmp-redis')
 
 tmp(6380, function (err, shutdown, path) {
-  // if no err, there is now a redis-server running
-  // which can be shutdown by calling `shutdown(cb)`.
+  if (err) throw err
+
+  // When you're done
+  shutdown(function (err) {
+    if (err) throw err
+  })
 })
 ```
 
-- - -
+## License
 
-### Developed by [Terra Eclipse](http://www.terraeclipse.com)
-Terra Eclipse, Inc. is a nationally recognized political technology and
-strategy firm located in Aptos, CA and Washington, D.C.
-
-- - -
-
-### License: MIT
-
-- Copyright (C) 2013 Carlos Rodriguez (http://s8f.org/)
-- Copyright (C) 2013 Terra Eclipse, Inc. (http://www.terraeclipse.com/)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the &quot;Software&quot;), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is furnished
-to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+[MIT](LICENSE.md) © 2013-present [Carlos Rodriguez](http://s8f.org/), [Terra Eclipse, Inc.](http://www.terraeclipse.com/) and [Contributors](CONTRIBUTORS.md). Forked from [`haredis-tmp`](https://github.com/carlos8f/haredis-tmp).

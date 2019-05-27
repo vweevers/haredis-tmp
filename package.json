@@ -1,16 +1,19 @@
 {
-  "name": "haredis-tmp",
+  "name": "tmp-redis",
   "version": "0.1.0",
   "description": "Start a single Redis server for testing or ephemeral data",
+  "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "test": "standard && nyc node test"
+    "test": "standard && hallmark && nyc node test",
+    "hallmark": "hallmark --fix"
   },
   "dependencies": {
     "rimraf": "~2.6.3",
     "tempy": "0.2.1"
   },
   "devDependencies": {
+    "hallmark": "^0.1.0",
     "ioredis": "^4.9.5",
     "nyc": "^14.1.1",
     "standard": "^12.0.1",
@@ -23,18 +26,25 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/carlos8f/haredis-tmp.git"
+    "url": "git://github.com/vweevers/tmp-redis.git"
   },
-  "homepage": "https://github.com/carlos8f/haredis-tmp",
+  "homepage": "https://github.com/vweevers/tmp-redis",
+  "contributors": [
+    {
+      "name": "Carlos Rodriguez",
+      "email": "carlos@s8f.org",
+      "github": "carlos8f"
+    },
+    {
+      "name": "Vincent Weevers",
+      "github": "vweevers"
+    }
+  ],
   "keywords": [
     "redis",
-    "cluster",
-    "haredis",
-    "high",
-    "availability"
+    "test",
+    "tmp"
   ],
-  "author": "Carlos Rodriguez <carlos@s8f.org> (http://s8f.org/)",
-  "license": "MIT",
   "engines": {
     "node": ">=6"
   }

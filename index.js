@@ -19,7 +19,7 @@ module.exports = function tmp (port, opts, cb) {
       throw new Error('Redis cluster support was removed. Provide a single port.')
     } else if (!warned) {
       warned = true
-      process.emitWarning('Redis cluster support was removed. Provide a single port.', 'haredis-tmp')
+      process.emitWarning('Redis cluster support was removed. Provide a single port.', 'tmp-redis')
     }
 
     port = port[0]
