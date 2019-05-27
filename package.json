@@ -1,7 +1,7 @@
 {
   "name": "haredis-tmp",
   "version": "0.1.0",
-  "description": "quick redis server cluster for testing or ephemeral data",
+  "description": "Start a single Redis server for testing or ephemeral data",
   "main": "index.js",
   "scripts": {
     "test": "standard && nyc node test"
@@ -12,7 +12,6 @@
     "rimraf": "~2.6.3"
   },
   "devDependencies": {
-    "haredis": "^0.2.14",
     "ioredis": "^4.9.5",
     "nyc": "^14.1.1",
     "standard": "^12.0.1",

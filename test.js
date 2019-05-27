@@ -1,60 +1,55 @@
 'use strict'
 
 const test = require('tape')
-const haredis = require('haredis')
 const Redis = require('ioredis')
 const existsSync = require('fs').existsSync
 const net = require('net')
 const tmp = require('.')
 
 test('basic', function (t) {
-  let ports = [6380, 6381, 6382]
+  const port = 6380
+
   let shutdown
-  let client
-  let p
-  let servers
+  let path
 
-  t.test('create a cluster', function (t) {
-    tmp(ports, function (err, arg1, arg2, arg3) {
+  t.test('start redis', function (t) {
+    tmp(port, function (err, shutdown_, path_) {
       t.ifError(err)
-      p = arg1
-      shutdown = arg2
-      servers = arg3
+      shutdown = shutdown_
+      path = path_
       t.is(typeof shutdown, 'function')
-      t.is(typeof p, 'string')
-      t.ok(~p.indexOf('haredis-tmp'))
-      t.ok(existsSync(p))
-      t.is(Object.keys(servers).length, 3)
+      t.is(typeof path, 'string')
       t.end()
     })
   })
 
-  t.test('ports accessible', function (t) {
-    assertPorts(t, ports, t.end.bind(t))
-  })
+  t.test('connect', function (t) {
+    const client = new Redis({
+      port: port,
+      host: '127.0.0.1',
+      family: 4
+    })
 
-  t.test('connect to cluster', function (t) {
-    client = haredis.createClient(ports, { log_level: 0 })
-    client.once('connect', function () {
-      t.is(client.up.length, 3)
+    client.once('ready', function () {
+      t.pass('ready')
+      client.disconnect()
       t.end()
     })
   })
 
-  t.test('quit client', function (t) {
-    client.quit(t.end.bind(t))
-  })
-
-  t.test('shutdown cluster', function (t) {
-    shutdown(t.end.bind(t))
+  t.test('shutdown', function (t) {
+    shutdown(function (err) {
+      t.ifError(err, 'no shutdown error')
+      t.end()
+    })
   })
 
   t.test('ports not accessible', function (t) {
-    assertNoPorts(t, ports, t.end.bind(t))
+    assertNoPorts(t, [port], t.end.bind(t))
   })
 
   t.test('no files left over', function (t) {
-    t.ok(!existsSync(p))
+    t.ok(!existsSync(path))
     t.end()
   })
 
@@ -64,31 +59,17 @@ test('basic', function (t) {
 test('password test with ioredis', function (t) {
   let port = 6380
   let shutdown
-  let client
-  let p
-  let servers
 
-  t.test('create an instance', function (t) {
-    tmp([port], { password: 'qwerty' }, function (err, arg1, arg2, arg3) {
+  t.test('start redis', function (t) {
+    tmp(port, { password: 'qwerty' }, function (err, shutdown_) {
       t.ifError(err)
-      p = arg1
-      shutdown = arg2
-      servers = arg3
-      t.is(typeof shutdown, 'function')
-      t.is(typeof p, 'string')
-      t.ok(~p.indexOf('haredis-tmp'))
-      t.ok(existsSync(p))
-      t.is(Object.keys(servers).length, 1)
+      shutdown = shutdown_
       t.end()
     })
   })
 
-  t.test('ports accessible', function (t) {
-    assertPorts(t, [port], t.end.bind(t))
-  })
-
-  t.test('connect to instance', function (t) {
-    client = new Redis({
+  t.test('connect', function (t) {
+    const client = new Redis({
       port: port,
       host: '127.0.0.1',
       family: 4,
@@ -96,44 +77,16 @@ test('password test with ioredis', function (t) {
     })
 
     client.once('ready', function () {
+      t.pass('ready')
+      client.disconnect()
       t.end()
     })
   })
 
-  t.test('quit client', function (t) {
-    client.quit(t.end.bind(t))
-  })
-
-  t.test('shutdown cluster', function (t) {
+  t.test('shutdown', function (t) {
     shutdown(t.end.bind(t))
   })
-
-  t.test('ports not accessible', function (t) {
-    assertNoPorts(t, [port], t.end.bind(t))
-  })
-
-  t.test('no files left over', function (t) {
-    t.ok(!existsSync(p))
-    t.end()
-  })
 })
-
-function assertPorts (t, ports, done) {
-  let latch = ports.length
-
-  ports.forEach(function (port) {
-    const socket = net.createConnection(port)
-
-    socket.once('error', done)
-    socket.once('connect', function () {
-      socket.once('close', function () {
-        if (!--latch) done()
-      })
-
-      socket.end()
-    })
-  })
-}
 
 function assertNoPorts (t, ports, done) {
   let latch = ports.length

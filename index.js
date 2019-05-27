@@ -1,6 +1,5 @@
 'use strict'
 
-const exec = require('child_process').exec
 const spawn = require('child_process').spawn
 const fs = require('fs')
 const path = require('path')
@@ -9,77 +8,77 @@ const rimraf = require('rimraf')
 const idgen = require('idgen')
 const tmpdir = require('os').tmpdir()
 
-module.exports = function tmp (ports, opts, cb) {
+let warned = false
+
+module.exports = function tmp (port, opts, cb) {
   if (typeof opts === 'function') {
     cb = opts
     opts = {}
   }
 
+  if (Array.isArray(port)) {
+    if (port.length > 1) {
+      throw new Error('Redis cluster support was removed. Provide a single port.')
+    } else if (!warned) {
+      warned = true
+      process.emitWarning('Redis cluster support was removed. Provide a single port.', 'haredis-tmp')
+    }
+
+    port = port[0]
+  }
+
   // TODO: use tempy
   const p = path.join(tmpdir, 'haredis-tmp-' + idgen() + '-' + Date.now())
   const servers = {}
+  const ports = [port]
 
   let killed = false
 
   // TODO: throw error on premature exit
   function makeServer (port, cb) {
-    exec('redis-server --version', function (err, stdout, stderr) {
+    const dir = p
+    const configfile = path.join(dir, 'redis.conf')
+
+    mkdirp(dir, function (err) {
       if (err) return cb(err)
 
-      let version
-      let matches = stdout.match(/Redis server v=(.*) sha=/)
+      let conf = 'port ' + port + '\ndir ' + dir + '\n'
 
-      if (matches) {
-        version = matches[1]
-      } else {
-        matches = stdout.match(/version ([^ ]+) /)
-        if (matches) version = matches[1]
-        else return cb(new Error('could not detect redis-server version! ' + stdout))
+      if (opts.password) {
+        conf += 'requirepass ' + opts.password.trim() + '\n'
       }
 
-      const dir = path.join(p, String(port))
-      const configfile = path.join(dir, 'redis.conf')
+      if (opts.bufferLimit === false) {
+        conf += 'client-output-buffer-limit pubsub 0 0 0\n'
+        conf += 'client-output-buffer-limit slave 0 0 0\n'
+      }
 
-      mkdirp(dir, function (err) {
+      fs.writeFile(configfile, conf, function (err) {
         if (err) return cb(err)
 
-        let conf = 'port ' + port + '\ndir ' + dir + '\n'
+        const child = spawn('redis-server', [configfile], { stdio: ['ignore', 'pipe', 'inherit'] })
 
-        if (!version.match(/^2\.(2|3|4)\./)) conf += 'slave-read-only no\n'
-        if (opts.password) conf += 'requirepass ' + opts.password.trim() + '\n'
+        let started = false
+        let buf = ''
 
-        if (opts.bufferLimit === false) {
-          conf += 'client-output-buffer-limit pubsub 0 0 0\n'
-          conf += 'client-output-buffer-limit slave 0 0 0\n'
-        }
-
-        fs.writeFile(configfile, conf, function (err) {
-          if (err) return cb(err)
-
-          const child = spawn('redis-server', [configfile], { stdio: ['ignore', 'pipe', 'inherit'] })
-
-          let started = false
-          let buf = ''
-
-          child.stdout.on('data', function handleData (chunk) {
-            if (!started && /The server is now ready/.test(buf += chunk)) {
-              if (opts.verbose) {
-                child.stdout.removeListener('data', handleData)
-                child.stdout.pipe(process.stderr)
-              }
-
-              started = true
-              clearTimeout(timeout)
-              cb(null, child)
+        child.stdout.on('data', function handleData (chunk) {
+          if (!started && /The server is now ready/.test(buf += chunk)) {
+            if (opts.verbose) {
+              child.stdout.removeListener('data', handleData)
+              child.stdout.pipe(process.stderr)
             }
-          })
 
-          const timeout = setTimeout(function () {
-            cb(new Error('redis-server on port ' + port + ' failed to start'))
-          }, 10000)
-
-          timeout.unref()
+            started = true
+            clearTimeout(timeout)
+            cb(null, child)
+          }
         })
+
+        const timeout = setTimeout(function () {
+          cb(new Error('redis-server on port ' + port + ' failed to start'))
+        }, 10000)
+
+        timeout.unref()
       })
     })
   }
@@ -124,7 +123,7 @@ module.exports = function tmp (ports, opts, cb) {
     makeServer(port, function (err, server) {
       if (err || errored) return onErr(err)
       servers[port] = server
-      if (!--latch) cb && cb(null, p, shutdown, servers)
+      if (!--latch) cb && cb(null, shutdown, p)
     })
   })
 }
