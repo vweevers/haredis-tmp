@@ -4,7 +4,7 @@
   "description": "quick redis server cluster for testing or ephemeral data",
   "main": "index.js",
   "scripts": {
-    "test": "standard && node test/basic"
+    "test": "standard && node test"
   },
   "dependencies": {
     "rimraf": "~2.1.4",

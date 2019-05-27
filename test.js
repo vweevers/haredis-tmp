@@ -5,7 +5,7 @@ const haredis = require('haredis')
 const Redis = require('ioredis')
 const existsSync = require('fs').existsSync
 const net = require('net')
-const tmp = require('..')
+const tmp = require('.')
 
 test('basic', function (t) {
   let ports = [6380, 6381, 6382]
